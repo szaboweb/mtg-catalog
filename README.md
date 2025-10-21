@@ -11,11 +11,11 @@ mtg-catalog/
 
 ├── config/ # Konfigurációs fájlok, adatbázis kapcsolat beállításai (db.js)
 
-│ └── db.js # MariaDB-hez való csatlakozás kezelése környezeti változókkal
+└── db.js # MariaDB-hez való csatlakozás kezelése környezeti változókkal
 
 ├── routes/ # Az Express útvonalak (routes) helye, itt definiáljuk az API végpontokat
 
-│ └── cards.js # A kártyákat kezelő HTTP végpontok (pl. GET /cards, POST /cards)
+└── cards.js # A kártyákat kezelő HTTP végpontok (pl. GET /cards, POST /cards)
 
 ├── app.js # Az alkalmazás fő szerverfájlja, köztes rétegek, útvonalak regisztrációja, Express (backend keretrendszer) szerver indítása
 
