@@ -1,0 +1,62 @@
+{
+	"info": {
+		"_postman_id": "mtg-catalog-api",
+		"name": "api-testing",
+		"description": "Magic: The Gathering card catalog REST API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get All Cards",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/cards",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"cards"
+					]
+				},
+				"description": "Fetch all cards from the database"
+			},
+			"response": []
+		},
+		{
+			"name": "Add New Card",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Lightning Bolt\",\n  \"manaCost\": \"R\",\n  \"type\": \"Instant\",\n  \"rarity\": \"Common\",\n  \"set\": \"Alpha\",\n  \"description\": \"Lightning Bolt deals 3 damage to any target.\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/cards",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"cards"
+					]
+				},
+				"description": "Add a new card to the database"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3300",
+			"type": "string"
+		}
+	]
+}

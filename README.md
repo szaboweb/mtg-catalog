@@ -7,12 +7,25 @@ Egyszerű Node.js backend MariaDB adatbázissal az MTG katalógushoz.
 - Kártyák lekérése (`GET /cards`)
 - Új kártya hozzáadása (`POST /cards`)
 
+## API Tesztelés Postman-nal
+
+A projekt tartalmaz egy `postman.json` fájlt, amit importálhatsz Postman-ba:
+
+1. Nyisd meg a Postman-t
+2. Import → Upload Files → válaszd ki a `postman.json` fájlt
+3. A collection automatikusan beállítja a `base_url` változót `http://localhost:3300`-ra
+
+### Elérhető végpontok:
+- **GET /cards** - Összes kártya lekérése
+- **POST /cards** - Új kártya hozzáadása (JSON body-val)
+
 mtg-catalog/
 ├── config/ # Konfigurációs fájlok, adatbázis kapcsolat beállításai (db.js)
 │ └── db.js # MariaDB-hez való csatlakozás kezelése környezeti változókkal
 ├── routes/ # Az Express útvonalak (routes) helye, itt definiáljuk az API végpontokat
 │ └── cards.js # A kártyákat kezelő HTTP végpontok (pl. GET /cards, POST /cards)
 ├── app.js # Az alkalmazás fő szerverfájlja, köztes rétegek, útvonalak regisztrációja, Express (backend keretrendszer) szerver indítása
+├── postman.json # Postman collection fájl az API végpontok teszteléséhez
 ├── .env # Környezeti változók (adatbázis jelszó, host, port stb.), ami NEM kerül a verziókezelőbe (.gitignore-ban van)
 ├── .gitignore # A git által figyelmen kívül hagyandó fájlok listája (pl. node_modules, .env)
 ├── README.md # Projekt dokumentáció, fejlesztési útmutató
