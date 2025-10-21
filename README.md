@@ -8,6 +8,7 @@ Egyszerű Node.js backend MariaDB adatbázissal az MTG katalógushoz.
 - Új kártya hozzáadása (`POST /cards`)
 
 mtg-catalog/
+
 ├── config/ # Konfigurációs fájlok, adatbázis kapcsolat beállításai (db.js)
 
 │ └── db.js # MariaDB-hez való csatlakozás kezelése környezeti változókkal
