@@ -22,13 +22,28 @@ const ALLOWED_FIELDS = [
 ];
 
 // Listázás: GET /cards - visszaadja az összes kártyát
+// GET /cards - supports pagination: ?limit=25&page=1
 router.get('/', (req, res) => {
-  db.query('SELECT * FROM cards', (err, results) => {
+  const limitRaw = parseInt(req.query.limit, 10);
+  const pageRaw = parseInt(req.query.page, 10);
+  const limit = Number.isNaN(limitRaw) ? 25 : Math.max(1, Math.min(100, limitRaw));
+  const page = Number.isNaN(pageRaw) ? 1 : Math.max(1, pageRaw);
+  const offset = (page - 1) * limit;
+
+  // Get total count then page of results
+  db.query('SELECT COUNT(*) AS total FROM cards', (err, countRows) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: 'Database error' });
     }
-    res.json(results);
+    const total = (countRows && countRows[0] && countRows[0].total) ? countRows[0].total : 0;
+    db.query('SELECT * FROM cards ORDER BY id DESC LIMIT ? OFFSET ?', [limit, offset], (err2, rows) => {
+      if (err2) {
+        console.error(err2);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json({ total, items: rows });
+    });
   });
 });
 
