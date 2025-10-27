@@ -1,5 +1,6 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const morgan = require('morgan');
+const helmet = require('helmet');
 const fs = require('fs');
 const path = require('path');
 const cardRoutes = require('./routes/cards');
@@ -8,7 +9,11 @@ const db = require('./config/db');
 require('dotenv').config();
 
 const app = express();
-app.use(bodyParser.json());
+
+// Middleware configuration (proper order)
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.json());
 
 // Serve static frontend files from /public
 app.use(express.static('public'));
@@ -58,4 +63,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-

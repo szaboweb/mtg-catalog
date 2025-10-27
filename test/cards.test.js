@@ -7,7 +7,7 @@ const path = require('path');
 const dbPath = path.join(__dirname, '..', 'config', 'db.js');
 
 function makeStubDb() {
-  return {
+  const db = {
     isConnected: true,
     query: (sql, params, cb) => {
       // Normalize args: params optional
@@ -30,6 +30,18 @@ function makeStubDb() {
       return cb(null, []);
     }
   };
+  
+  // Add queryAsync as a promisified version of query
+  db.queryAsync = function(sql, params) {
+    return new Promise((resolve, reject) => {
+      db.query(sql, params, (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
+    });
+  };
+  
+  return db;
 }
 
 describe('Cards routes (unit)', () => {
