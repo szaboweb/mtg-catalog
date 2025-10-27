@@ -2,133 +2,153 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// Router szerepe:
-// - Ez az Express router kezeli a /cards útvonal alatti kéréseket (GET, POST stb.).
-// - Az app.js-ben a router így van felcsatolva: app.use('/cards', cardRoutes).
-// - Itt történik az adatbázis-lekérdezés és az alap validation.
+// ===================================
+// Helper Functions
+// ===================================
 
-// Megengedett (elvárt) mezők a `cards` táblához
+// Allowed fields for INSERT operations
 const ALLOWED_FIELDS = [
-  'name',
-  'release_year',
-  'cost',
-  'type',
-  'subtype',
-  'ability',
-  'power',
-  'toughness',
-  'text',
-  'rarity'
+  'name', 'release_year', 'cost', 'type', 'subtype', 
+  'ability', 'power', 'toughness', 'text', 'rarity'
 ];
 
-// Listázás: GET /cards - visszaadja az összes kártyát
-// GET /cards - supports pagination: ?limit=25&page=1
-router.get('/', (req, res) => {
-  const limitRaw = parseInt(req.query.limit, 10);
-  const pageRaw = parseInt(req.query.page, 10);
-  const limit = Number.isNaN(limitRaw) ? 25 : Math.max(1, Math.min(100, limitRaw));
-  const page = Number.isNaN(pageRaw) ? 1 : Math.max(1, pageRaw);
-  const offset = (page - 1) * limit;
-
-  // Get total count then page of results
-  db.query('SELECT COUNT(*) AS total FROM cards', (err, countRows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Database error' });
+/**
+ * Build insert object from request body with only allowed fields
+ */
+function buildInsertObj(body) {
+  const obj = {};
+  ALLOWED_FIELDS.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      obj[field] = body[field];
     }
-    const total = (countRows && countRows[0] && countRows[0].total) ? countRows[0].total : 0;
-    db.query('SELECT * FROM cards ORDER BY id DESC LIMIT ? OFFSET ?', [limit, offset], (err2, rows) => {
-      if (err2) {
-        console.error(err2);
-        return res.status(500).json({ error: 'Database error' });
-      }
-      res.json({ total, items: rows });
-    });
   });
+  
+  // Set default value for text if not provided
+  if (!Object.prototype.hasOwnProperty.call(obj, 'text') || obj.text === null) {
+    obj.text = 'no-text';
+  }
+  
+  return obj;
+}
+
+/**
+ * Coerce numeric fields to integers
+ */
+function coerceInts(obj) {
+  ['release_year', 'power', 'toughness'].forEach((field) => {
+    if (obj[field] !== undefined && obj[field] !== null) {
+      const value = parseInt(obj[field], 10);
+      obj[field] = Number.isNaN(value) ? null : value;
+    }
+  });
+}
+
+/**
+ * Parse unknown column names from MySQL error message
+ */
+function parseUnknownColumns(errorMessage) {
+  if (!errorMessage) return [];
+  const matches = errorMessage.match(/Unknown column '([^']+)' in 'field list'/g) || [];
+  return matches.map(m => m.replace(/Unknown column '([^']+)' in 'field list'/, '$1'));
+}
+
+// ===================================
+// Routes
+// ===================================
+
+/**
+ * GET /cards
+ * Retrieve all cards with optional pagination
+ * Query params: limit (default: 25), page (default: 1)
+ * Returns: { total: number, items: array }
+ */
+router.get('/', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 25;
+    const page = parseInt(req.query.page, 10) || 1;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await db.queryAsync('SELECT COUNT(*) AS total FROM cards');
+    const total = countResult[0].total;
+
+    // Get paginated cards
+    const cards = await db.queryAsync(
+      'SELECT * FROM cards ORDER BY id DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+
+    res.json({
+      total: total,
+      items: cards
+    });
+  } catch (err) {
+    console.error('GET /cards error:', err);
+    res.status(500).json({ error: 'Failed to retrieve cards' });
+  }
 });
 
-// Új rekord beszúrása: POST /cards
-// Lényeg: fogadjuk a JSON body-t, csak a megengedett mezőket használjuk,
-// szükség esetén konvertálunk (int mezők), alapértelmezőt adunk a `text`-nek,
-// megpróbáljuk az INSERT-et, és ha az ismeretlen oszlop miatt hibázik,
-// eltávolítjuk az ismeretlen oszlopokat és egyszer újrapróbáljuk.
-router.post('/', (req, res) => {
+/**
+ * POST /cards
+ * Create a new card
+ * Body: { name (required), release_year, cost, type, subtype, ability, power, toughness, text, rarity }
+ * Returns: Created card object with 201 status
+ */
+router.post('/', async (req, res) => {
   const body = req.body || {};
 
-  // 1) Egyszerű validáció: a `name` kötelező (DB-ben NOT NULL)
+  // Validation: name is required (NOT NULL in DB)
   if (!body.name || String(body.name).trim() === '') {
     return res.status(400).json({ error: 'Missing required field: name' });
   }
 
-  // 2) Csak a megengedett mezőket másoljuk át az insert objektumba
-  const insertObj = {};
-  ALLOWED_FIELDS.forEach((field) => {
-    if (Object.prototype.hasOwnProperty.call(body, field)) {
-      insertObj[field] = body[field];
-    }
-  });
+  // Build insert object with only allowed fields
+  const insertObj = buildInsertObj(body);
+  
+  // Coerce numeric fields to integers
+  coerceInts(insertObj);
 
-  // 3) Alapértelmezett: ha a `text` hiányzik, állítsuk 'no-text'-re
-  if (!Object.prototype.hasOwnProperty.call(insertObj, 'text') || insertObj.text === null) {
-    insertObj.text = 'no-text';
-  }
-
-  // 4) Szám típusok konverziója: release_year, power, toughness
-  if (insertObj.release_year !== undefined && insertObj.release_year !== null) {
-    const v = parseInt(insertObj.release_year, 10);
-    insertObj.release_year = Number.isNaN(v) ? null : v;
-  }
-  if (insertObj.power !== undefined && insertObj.power !== null) {
-    const v = parseInt(insertObj.power, 10);
-    insertObj.power = Number.isNaN(v) ? null : v;
-  }
-  if (insertObj.toughness !== undefined && insertObj.toughness !== null) {
-    const v = parseInt(insertObj.toughness, 10);
-    insertObj.toughness = Number.isNaN(v) ? null : v;
-  }
-
-  // 5) INSERT: használjuk a parameterizált 'SET ?' formát, ami biztonságosabb
-  db.query('INSERT INTO cards SET ?', insertObj, (err, result) => {
-    if (err) {
-      // 6) Hiba kezelése: ha az oszlop nem létezik (ER_BAD_FIELD_ERROR),
-      // töröljük az ismeretlen oszlopokat és próbáljuk újra egyszer.
-      if (err.code === 'ER_BAD_FIELD_ERROR' && !insertObj._retry) {
-        const msg = err.sqlMessage || '';
-        const matches = msg.match(/Unknown column '([^']+)' in 'field list'/g) || [];
-        const offending = matches.map(m => m.replace(/Unknown column '([^']+)' in 'field list'/, '$1'));
-        offending.forEach(col => delete insertObj[col]);
-        insertObj._retry = true; // csak egyszer próbálkozunk újra
-        return db.query('INSERT INTO cards SET ?', insertObj, (err2, result2) => {
-          if (err2) {
-            console.error(err2);
-            return res.status(500).json({ error: 'Insert error after retry' });
-          }
-          // 7) Ha sikerült, lekérdezzük és visszaadjuk az új sort
-          db.query('SELECT * FROM cards WHERE id = ?', [result2.insertId], (err3, rows) => {
-            if (err3) {
-              console.error(err3);
-              return res.status(500).json({ error: 'Retrieve inserted record error' });
-            }
-            const record = rows && rows[0] ? rows[0] : { id: result2.insertId, ...insertObj };
-            return res.status(201).json(record);
-          });
-        });
+  try {
+    // Attempt INSERT
+    const result = await db.queryAsync('INSERT INTO cards SET ?', insertObj);
+    
+    // Retrieve the inserted record
+    const rows = await db.queryAsync('SELECT * FROM cards WHERE id = ?', [result.insertId]);
+    const record = (rows && rows[0]) ? rows[0] : { id: result.insertId, ...insertObj };
+    
+    return res.status(201).json(record);
+  } catch (err) {
+    // Handle unknown column errors by retrying without offending columns
+    if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+      const errorMessage = err.sqlMessage || err.message || '';
+      const offendingColumns = parseUnknownColumns(errorMessage);
+      
+      if (offendingColumns.length > 0) {
+        console.warn('Unknown columns detected, retrying without:', offendingColumns);
+        
+        // Remove offending columns
+        offendingColumns.forEach(col => delete insertObj[col]);
+        
+        try {
+          const retryResult = await db.queryAsync('INSERT INTO cards SET ?', insertObj);
+          const retryRows = await db.queryAsync('SELECT * FROM cards WHERE id = ?', [retryResult.insertId]);
+          const retryRecord = (retryRows && retryRows[0]) ? retryRows[0] : { id: retryResult.insertId, ...insertObj };
+          
+          return res.status(201).json(retryRecord);
+        } catch (retryErr) {
+          console.error('POST /cards retry error:', retryErr);
+          return res.status(500).json({ error: 'Insert failed after retry' });
+        }
       }
-      console.error(err);
-      return res.status(500).json({ error: 'Insert error' });
     }
-
-    // 8) Sikeres beszúrás: lekérdezzük az új sort és visszaküldjük (201)
-    db.query('SELECT * FROM cards WHERE id = ?', [result.insertId], (err2, rows) => {
-      if (err2) {
-        console.error(err2);
-        return res.status(500).json({ error: 'Retrieve inserted record error' });
-      }
-      const record = rows && rows[0] ? rows[0] : { id: result.insertId, ...insertObj };
-      res.status(201).json(record);
+    
+    // Generic error handling
+    console.error('POST /cards error:', err);
+    return res.status(500).json({ 
+      error: 'Failed to insert card',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
-  });
+  }
 });
 
 module.exports = router;
-
