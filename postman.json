@@ -36,7 +36,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"name\": \"Lightning Bolt\",\n  \"manaCost\": \"R\",\n  \"type\": \"Instant\",\n  \"rarity\": \"Common\",\n  \"set\": \"Alpha\",\n  \"description\": \"Lightning Bolt deals 3 damage to any target.\"\n}"
+					"raw": "{\n  \"name\": \"Lightning Bolt\",\n  \"release_year\": 1993,\n  \"cost\": \"R\",\n  \"type\": \"Instant\",\n  \"subtype\": \"\",\n  \"ability\": \"Lightning Bolt deals 3 damage to any target.\",\n  \"power\": null,\n  \"toughness\": null,\n  \"text\": \"common\",\n  \"rarity\": \"R\"\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/cards",
