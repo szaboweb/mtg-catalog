@@ -62,6 +62,11 @@ mtg-catalog/
 
 ├── postman.json # Postman collection fájl az API végpontok teszteléséhez
 
+Frontend (React gyors prototípus)
+- A projekt mostantól tartalmaz egy egyszerű React alapú frontendet a `public/` mappában.
+- Indítás után megnyithatod: http://localhost:3300/ — itt egy egyszerű weboldal található, ami a `/cards` végpontot használja.
+- Funkciók: szűrés színek szerint (W U B R G a `cost` mező alapján), név szerinti keresés, exportálás JSON/CSV formátumban.
+
 ├── .env # Környezeti változók (adatbázis jelszó, host, port stb.), ami NEM kerül a verziókezelőbe (.gitignore-ban van)
 
 ├── .gitignore # A git által figyelmen kívül hagyandó fájlok listája (pl. node_modules, .env)
