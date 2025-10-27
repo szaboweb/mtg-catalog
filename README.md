@@ -19,6 +19,35 @@ A projekt tartalmaz egy `postman.json` fájlt, amit importálhatsz Postman-ba:
 - **GET /cards** - Összes kártya lekérése
 - **POST /cards** - Új kártya hozzáadása (JSON body-val)
 
+### POST body mezők
+A `POST /cards` kérés JSON body-ja a következő, a táblázat oszlopainak megfelelő mezőket használja. A `name` kötelező.
+
+- name (string) - kötelező
+- release_year (int) - opcionális
+- cost (string) - opcionális
+- type (string) - opcionális
+- subtype (string) - opcionális
+- ability (text) - opcionális
+- power (int) - opcionális
+- toughness (int) - opcionális
+- text (string) - opcionális
+- rarity (enum) - opcionális, lehetséges értékek: `M`, `R`, `U`, `C`. Alapértelmezett: `R` (ha nem adod meg)
+
+Példa Postman body (lásd `postman.json`):
+
+{
+	"name": "Lightning Bolt",
+	"release_year": 1993,
+	"cost": "R",
+	"type": "Instant",
+	"subtype": "",
+	"ability": "Lightning Bolt deals 3 damage to any target.",
+	"power": null,
+	"toughness": null,
+	"text": "common",
+	"rarity": "R"
+}
+
 mtg-catalog/
 
 ├── config/ # Konfigurációs fájlok, adatbázis kapcsolat beállításai (db.js)
