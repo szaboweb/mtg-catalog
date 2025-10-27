@@ -23,8 +23,8 @@ check_http() {
 # 1) status endpoint should exist
 check_http "$HOST/status" 200
 
-# 2) app.js static asset
-check_http "$HOST/app.js" 200
+# 2) frontend.js static asset
+check_http "$HOST/frontend.js" 200
 
 # 3) /cards should respond (200) — DB must be available for this to pass.
 check_http "$HOST/cards" 200

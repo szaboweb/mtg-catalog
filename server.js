@@ -11,7 +11,15 @@ require('dotenv').config();
 const app = express();
 
 // Middleware configuration (proper order)
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "https://unpkg.com"],
+      "style-src": ["'self'", "'unsafe-inline'"]
+    }
+  }
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 

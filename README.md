@@ -53,7 +53,7 @@ mtg-catalog/
 │ └── db.js # MariaDB-hez való csatlakozás kezelése környezeti változókkal
 ├── routes/ # Az Express útvonalak (routes) helye, itt definiáljuk az API végpontokat
 │ └── cards.js # A kártyákat kezelő HTTP végpontok (pl. GET /cards, POST /cards)
-├── app.js # Az alkalmazás fő szerverfájlja, köztes rétegek, útvonalak regisztrációja, Express (backend keretrendszer) szerver indítása
+├── server.js # Az alkalmazás fő szerverfájlja, köztes rétegek, útvonalak regisztrációja, Express (backend keretrendszer) szerver indítása
 ├── postman.json # Postman collection fájl az API végpontok teszteléséhez
 
 Frontend (React gyors prototípus)
